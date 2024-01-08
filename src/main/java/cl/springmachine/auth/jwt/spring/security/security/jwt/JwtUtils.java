@@ -17,7 +17,7 @@ public class JwtUtils {
 
 	private static String jwtSecret = "======================SpringMachine===========================";
 
-	private static Integer jwtExpirationTime = 86400000;
+	private static Integer jwtExpirationTime = 3600000;
 
 	public String generateJwtToken(Authentication authentication) {
 
@@ -43,5 +43,11 @@ public class JwtUtils {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	public String generateTokenFromUsername(String username) {
+		return Jwts.builder().setSubject(username).setIssuedAt(new Date())
+				.setExpiration(new Date((new Date()).getTime() + jwtExpirationTime))
+				.signWith(key(), SignatureAlgorithm.HS256).compact();
 	}
 }

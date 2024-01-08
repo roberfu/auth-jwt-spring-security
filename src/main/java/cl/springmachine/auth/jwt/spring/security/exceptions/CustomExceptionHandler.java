@@ -49,4 +49,13 @@ public class CustomExceptionHandler {
 		return problemDetail;
 	}
 
+	@ExceptionHandler(value = TokenRefreshException.class)
+	@ResponseStatus(HttpStatus.FORBIDDEN)
+	public ProblemDetail handleTokenRefreshException(TokenRefreshException ex, WebRequest request) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+		problemDetail.setType(URI.create(RFC_STRING));
+		problemDetail.setProperties(new HashMap<>());
+		return problemDetail;
+	}
+
 }

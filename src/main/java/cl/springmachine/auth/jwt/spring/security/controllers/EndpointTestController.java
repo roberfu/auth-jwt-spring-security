@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/test")
-public class TestController {
+public class EndpointTestController {
 
 	private static final String MESSAGE_STRING = "message";
 

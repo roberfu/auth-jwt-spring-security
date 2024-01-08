@@ -12,14 +12,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import cl.springmachine.auth.jwt.spring.security.dtos.RefreshTokenRequestDto;
 import cl.springmachine.auth.jwt.spring.security.dtos.RegisterUserRequestDto;
 import cl.springmachine.auth.jwt.spring.security.dtos.TokenRequestDto;
 import cl.springmachine.auth.jwt.spring.security.dtos.TokenResponseDto;
 import cl.springmachine.auth.jwt.spring.security.dtos.UserResponseDto;
+import cl.springmachine.auth.jwt.spring.security.entities.RefreshToken;
 import cl.springmachine.auth.jwt.spring.security.entities.Role;
 import cl.springmachine.auth.jwt.spring.security.entities.User;
 import cl.springmachine.auth.jwt.spring.security.enums.ERole;
 import cl.springmachine.auth.jwt.spring.security.exceptions.CustomException;
+import cl.springmachine.auth.jwt.spring.security.exceptions.TokenRefreshException;
 import cl.springmachine.auth.jwt.spring.security.repositories.RoleRepository;
 import cl.springmachine.auth.jwt.spring.security.repositories.UserRepository;
 import cl.springmachine.auth.jwt.spring.security.security.jwt.JwtUtils;
@@ -27,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SecurityService {
+public class UserJwtService {
 
 	private final AuthenticationManager authenticationManager;
 
@@ -39,7 +42,9 @@ public class SecurityService {
 
 	private final JwtUtils jwtUtils;
 
-	public TokenResponseDto getToken(TokenRequestDto request) {
+	private final RefreshTokenService refreshTokenService;
+
+	public TokenResponseDto getToken(TokenRequestDto request) throws CustomException {
 
 		Authentication authentication = authenticationManager
 				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -47,7 +52,13 @@ public class SecurityService {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtUtils.generateJwtToken(authentication);
 
-		return new TokenResponseDto(jwt, "Bearer");
+		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+		refreshTokenService.deleteByUserId(userDetails.getId());
+
+		RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+
+		return new TokenResponseDto(jwt, "Bearer", refreshToken.getToken());
 	}
 
 	@Transactional
@@ -74,6 +85,17 @@ public class SecurityService {
 		}
 
 		return new UserResponseDto(user.getId(), user.getEmail(), user.getRoles().stream().map(Role::getName).toList());
+	}
+
+	public TokenResponseDto refreshToken(RefreshTokenRequestDto request) {
+		String requestRefreshToken = request.getRefreshToken();
+
+		User user = refreshTokenService.findByToken(requestRefreshToken).map(refreshTokenService::verifyExpiration)
+				.map(RefreshToken::getUser).orElseThrow(() -> new TokenRefreshException("Invalid Refresh Token"));
+
+		String newToken = jwtUtils.generateTokenFromUsername(user.getEmail());
+
+		return new TokenResponseDto(newToken, "Bearer", requestRefreshToken);
 	}
 
 }

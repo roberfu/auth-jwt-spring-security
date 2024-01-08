@@ -2,9 +2,9 @@ package cl.springmachine.auth.jwt.spring.security.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,14 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TokenResponseDto {
+public class RefreshTokenRequestDto {
 
-	@JsonProperty("access_token")
-	private String accessToken;
-
-	@Default
-	private String type = "Bearer";
-
+	@NotBlank(message = "Refresh Token Is Required")
 	@JsonProperty("refresh_token")
 	private String refreshToken;
 }
