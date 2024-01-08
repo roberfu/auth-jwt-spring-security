@@ -1,0 +1,18 @@
+server:
+  port: 8001
+  servlet:
+    context-path: /api
+  error:
+    include-message: always
+spring:
+  application:
+    name: auth-jwt-spring-security
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  docker:
+    compose:
+      stop:
+        command: down
+
